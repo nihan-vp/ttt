@@ -22,7 +22,7 @@ function playSound(soundFn) {
     try {
         initAudioContext();
         if (audioContext && audioContext.state === 'suspended') {
-            audioContext.resume();
+            audioContext.resume().catch(e => console.warn('Failed to resume audio context:', e));
         }
         if (audioContext) {
             soundFn();
@@ -34,6 +34,8 @@ function playSound(soundFn) {
 
 // Sound effect functions
 function playMoveSound() {
+    if (!audioContext) return;
+    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
@@ -51,6 +53,8 @@ function playMoveSound() {
 }
 
 function playWinSound() {
+    if (!audioContext) return;
+    
     const notes = [523.25, 659.25, 783.99]; // C, E, G (major chord)
     notes.forEach((freq, index) => {
         const oscillator = audioContext.createOscillator();
@@ -72,6 +76,8 @@ function playWinSound() {
 }
 
 function playDrawSound() {
+    if (!audioContext) return;
+    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
@@ -89,6 +95,8 @@ function playDrawSound() {
 }
 
 function playResetSound() {
+    if (!audioContext) return;
+    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
