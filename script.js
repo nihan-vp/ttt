@@ -3,6 +3,117 @@ let board = ['', '', '', '', '', '', '', '', ''];
 let currentPlayer = 'X';
 let gameActive = true;
 
+// Audio Context for sound effects
+let audioContext = null;
+
+// Initialize audio context (requires user gesture)
+function initAudioContext() {
+    if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn('Web Audio API not supported:', e);
+        }
+    }
+}
+
+// Helper function to play sound safely
+function playSound(soundFn) {
+    try {
+        initAudioContext();
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume().catch(e => console.warn('Failed to resume audio context:', e));
+        }
+        if (audioContext) {
+            soundFn();
+        }
+    } catch (e) {
+        console.warn('Error playing sound:', e);
+    }
+}
+
+// Sound effect functions
+function playMoveSound() {
+    if (!audioContext) return;
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 400;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+}
+
+function playWinSound() {
+    if (!audioContext) return;
+    
+    const notes = [523.25, 659.25, 783.99]; // C, E, G (major chord)
+    notes.forEach((freq, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = freq;
+        oscillator.type = 'sine';
+        
+        const startTime = audioContext.currentTime + (index * 0.1);
+        gainNode.gain.setValueAtTime(0.2, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.5);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + 0.5);
+    });
+}
+
+function playDrawSound() {
+    if (!audioContext) return;
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 200;
+    oscillator.type = 'sawtooth';
+    
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+}
+
+function playResetSound() {
+    if (!audioContext) return;
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.2);
+    oscillator.type = 'triangle';
+    
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+}
+
 // Get DOM elements
 const cells = document.querySelectorAll('.cell');
 const statusDisplay = document.getElementById('status');
@@ -45,6 +156,9 @@ function handleCellClick(event) {
     clickedCell.classList.add(currentPlayer.toLowerCase());
     clickedCell.classList.add('disabled');
 
+    // Play move sound
+    playSound(playMoveSound);
+
     // Check for win or draw
     checkResult();
 }
@@ -71,6 +185,9 @@ function checkResult() {
         });
         statusDisplay.textContent = `Player ${currentPlayer} Wins!`;
         gameActive = false;
+        
+        // Play win sound
+        playSound(playWinSound);
         return;
     }
 
@@ -78,6 +195,9 @@ function checkResult() {
     if (!board.includes('')) {
         statusDisplay.textContent = "It's a Draw!";
         gameActive = false;
+        
+        // Play draw sound
+        playSound(playDrawSound);
         return;
     }
 
@@ -105,6 +225,9 @@ function resetGame() {
     });
 
     updateStatus();
+    
+    // Play reset sound
+    playSound(playResetSound);
 }
 
 // Start the game
